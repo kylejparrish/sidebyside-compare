@@ -44,15 +44,12 @@ addBtn.addEventListener("click", addOption);
 function hideExports() {
   if (exportActions) exportActions.style.display = "none";
 }
-
 function showExports() {
   if (exportActions) exportActions.style.display = "flex";
 }
-
 function getFirstTableEl() {
   return resultDiv.querySelector("table");
 }
-
 function normalizeText(s) {
   return (s || "").replace(/\s+/g, " ").trim();
 }
@@ -96,20 +93,43 @@ async function copyTextToClipboard(text) {
   document.body.removeChild(ta);
 }
 
-function downloadFile(filename, contents, mime) {
-  const blob = new Blob([contents], { type: mime });
+// More robust download for Chrome/Edge/Firefox + Safari/iOS fallback
+function downloadCsvRobust(filename, csvText) {
+  const blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
+
+  // IE/old Edge
+  if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+    window.navigator.msSaveOrOpenBlob(blob, filename);
+    return;
+  }
+
   const url = URL.createObjectURL(blob);
+
+  // Normal download path
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
+  a.style.display = "none";
   document.body.appendChild(a);
-  a.click();
+
+  // Some browsers need a real click event
+  a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
   a.remove();
-  URL.revokeObjectURL(url);
+
+  // Safari/iOS fallback: open the blob URL if download didn’t trigger
+  // (This will open a tab showing CSV text; user can Save/Share)
+  setTimeout(() => {
+    try {
+      // If the page is still visible and user didn’t get a download prompt,
+      // opening the URL is the most reliable fallback.
+      // This is safe: it’s just the CSV file.
+      window.open(url, "_blank");
+    } catch (_) {}
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }, 250);
 }
 
 function extractRecapText() {
-  // Grabs Bottom line + Recap & Suggestion boxes as plain text
   const boxes = Array.from(resultDiv.querySelectorAll(".recap"));
   if (!boxes.length) return "";
   return boxes.map(b => normalizeText(b.innerText)).filter(Boolean).join("\n\n");
@@ -143,14 +163,13 @@ csvBtn?.addEventListener("click", () => {
     return;
   }
   const csv = tableToCSV(table);
-  downloadFile("sidebyside-comparison.csv", csv, "text/csv;charset=utf-8");
+  downloadCsvRobust("sidebyside-comparison.csv", csv);
 });
 
 compareBtn.addEventListener("click", async () => {
   hideExports();
 
   const wrappers = Array.from(inputsDiv.children);
-
   const options = wrappers
     .map((w, i) => {
       const name = w.querySelector(".optname")?.value?.trim() || `Option ${i + 1}`;
