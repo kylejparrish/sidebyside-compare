@@ -3,7 +3,8 @@
   --card: #111831;
   --text: #e8ebf5;
   --muted: #a7b0cc;
-  --border: rgba(255,255,255,0.12);
+  --border: rgba(255,255,255,0.14);
+  --border-strong: rgba(255,255,255,0.22);
   --primary: #6d5efc;
 }
 
@@ -17,7 +18,7 @@ body {
 }
 
 .wrap {
-  max-width: 980px;
+  max-width: 1100px;
   margin: 48px auto;
   padding: 0 18px 60px;
 }
@@ -74,7 +75,7 @@ body {
   border-radius: 12px;
   padding: 10px 14px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .btn.primary {
@@ -99,11 +100,59 @@ body {
   line-height: 1.5;
 }
 
+/* ✅ TABLE FIXES */
 .result table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   margin-top: 10px;
   color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  overflow: hidden;
+  table-layout: fixed;
+  min-width: 860px; /* forces scroll when many columns */
 }
 
-.result th, .result td
+.result th, .result td {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 12px;
+  vertical-align: top;
+  font-size: 14px;
+  line-height: 1.35;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.result tr:last-child td { border-bottom: 0; }
+.result th:last-child, .result td:last-child { border-right: 0; }
+
+.result th {
+  background: rgba(255,255,255,0.08);
+  text-align: left;
+  font-weight: 800;
+}
+
+.result td:first-child,
+.result th:first-child {
+  width: 170px;
+  background: rgba(255,255,255,0.05);
+  font-weight: 800;
+}
+
+/* zebra rows for readability */
+.result tbody tr:nth-child(even) td {
+  background: rgba(255,255,255,0.02);
+}
+
+/* makes wide tables usable on small screens */
+.result {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.footer {
+  margin-top: 20px;
+  color: var(--muted);
+}
