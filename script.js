@@ -3,6 +3,10 @@ const addBtn = document.getElementById("addOption");
 const compareBtn = document.getElementById("compare");
 const resultDiv = document.getElementById("result");
 
+const exportActions = document.getElementById("exportActions");
+const copyBtn = document.getElementById("copyTable");
+const csvBtn = document.getElementById("downloadCsv");
+
 let optionCount = 0;
 addOption();
 addOption();
@@ -37,7 +41,102 @@ function addOption() {
 
 addBtn.addEventListener("click", addOption);
 
+function hideExports() {
+  if (exportActions) exportActions.style.display = "none";
+}
+
+function showExports() {
+  if (exportActions) exportActions.style.display = "flex";
+}
+
+function getFirstTableEl() {
+  return resultDiv.querySelector("table");
+}
+
+function tableToTSV(table) {
+  const rows = Array.from(table.querySelectorAll("tr"));
+  return rows.map(row => {
+    const cells = Array.from(row.querySelectorAll("th,td"));
+    const vals = cells.map(c => (c.innerText || "").replace(/\s+/g, " ").trim());
+    return vals.join("\t");
+  }).join("\n");
+}
+
+function tableToCSV(table) {
+  const rows = Array.from(table.querySelectorAll("tr"));
+  return rows.map(row => {
+    const cells = Array.from(row.querySelectorAll("th,td"));
+    const vals = cells.map(c => {
+      let v = (c.innerText || "").replace(/\s+/g, " ").trim();
+      // CSV escaping
+      if (v.includes('"')) v = v.replace(/"/g, '""');
+      if (v.includes(",") || v.includes("\n") || v.includes('"')) v = `"${v}"`;
+      return v;
+    });
+    return vals.join(",");
+  }).join("\n");
+}
+
+async function copyTextToClipboard(text) {
+  // Modern clipboard API
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  // Fallback
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+}
+
+function downloadFile(filename, contents, mime) {
+  const blob = new Blob([contents], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+copyBtn?.addEventListener("click", async () => {
+  const table = getFirstTableEl();
+  if (!table) {
+    alert("Generate a table first.");
+    return;
+  }
+
+  try {
+    const tsv = tableToTSV(table);
+    await copyTextToClipboard(tsv);
+    copyBtn.textContent = "Copied!";
+    setTimeout(() => (copyBtn.textContent = "Copy table"), 1200);
+  } catch {
+    alert("Copy failed. Please try again.");
+  }
+});
+
+csvBtn?.addEventListener("click", () => {
+  const table = getFirstTableEl();
+  if (!table) {
+    alert("Generate a table first.");
+    return;
+  }
+  const csv = tableToCSV(table);
+  downloadFile("sidebyside-comparison.csv", csv, "text/csv;charset=utf-8");
+});
+
 compareBtn.addEventListener("click", async () => {
+  hideExports();
+
   const wrappers = Array.from(inputsDiv.children);
 
   const options = wrappers
@@ -64,7 +163,10 @@ compareBtn.addEventListener("click", async () => {
 
     const html = await response.text();
     resultDiv.innerHTML = html;
-  } catch (err) {
+
+    // Only show exports if a table exists
+    if (getFirstTableEl()) showExports();
+  } catch {
     resultDiv.innerHTML = "Something went wrong. Please try again.";
   }
 });
