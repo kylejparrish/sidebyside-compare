@@ -8,9 +8,7 @@ function escapeHtml(s = "") {
 }
 
 async function readJsonBody(req) {
-  // Vercel sometimes gives req.body, sometimes we need to read it ourselves.
   if (req.body && typeof req.body === "object") return req.body;
-
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
   const raw = Buffer.concat(chunks).toString("utf8");
@@ -28,7 +26,7 @@ export default async function handler(req, res) {
   try {
     body = await readJsonBody(req);
   } catch {
-    res.status(400).send("Bad Request: invalid JSON");
+    res.status(400).send("Invalid JSON");
     return;
   }
 
@@ -44,7 +42,7 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    res.status(500).send("Server not configured (missing OPENAI_API_KEY).");
+    res.status(500).send("Missing OPENAI_API_KEY.");
     return;
   }
 
@@ -58,33 +56,43 @@ export default async function handler(req, res) {
   ];
 
   const prompt = `
-You are a formatting engine. Build a clean comparison table.
+You are a strict comparison engine.
 
-Return ONLY valid JSON in this exact shape:
+Return ONLY valid JSON in this exact format:
 {
   "rows": [
-    {"attribute": "Core Use Case", "values": ["...", "..."]},
-    ...
-  ]
+    {"attribute":"Core Use Case","values":[["..."],["..."]]},
+    {"attribute":"Key Features","values":[["..."],["..."]]},
+    {"attribute":"Pros","values":[["..."],["..."]]},
+    {"attribute":"Cons","values":[["..."],["..."]]},
+    {"attribute":"Best For","values":[["..."],["..."]]},
+    {"attribute":"Not Ideal For","values":[["..."],["..."]]}
+  ],
+  "recap":{
+    "suggestion":"Option X or No clear winner",
+    "confidence":"low|medium|high",
+    "why":["...","..."],
+    "key_differences":["...","..."]
+  }
 }
 
 Rules:
-- rows must be exactly: ${schemaRows.join(", ")}
-- values array length must equal number of options
-- Use short bullet-style phrases separated by "; " (no line breaks)
-- If unknown or not stated, use "—"
-- Do NOT invent facts.
+- Values must be bullet arrays (1–4 short bullets max per cell)
+- values array length MUST equal number of options
+- Use "—" if information is missing
+- Do NOT invent facts
+- Suggestion must be conservative if data is insufficient
 
 OPTIONS:
 ${options.map((t, i) => `Option ${i + 1}: ${t}`).join("\n\n")}
 `.trim();
 
-  let jsonText = "";
+  let aiJson;
   try {
     const resp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -94,46 +102,59 @@ ${options.map((t, i) => `Option ${i + 1}: ${t}`).join("\n\n")}
       }),
     });
 
-    if (!resp.ok) {
-      const err = await resp.text();
-      res.status(500).send(`OpenAI error: ${escapeHtml(err)}`);
-      return;
-    }
-
     const data = await resp.json();
-    jsonText = data.choices?.[0]?.message?.content ?? "";
-  } catch (e) {
-    res.status(500).send("Server error contacting OpenAI.");
-    return;
-  }
-
-  // Parse JSON from model output
-  let table;
-  try {
-    table = JSON.parse(jsonText);
+    aiJson = JSON.parse(data.choices[0].message.content);
   } catch {
-    res.status(500).send("AI returned unexpected output. Please try again.");
+    res.status(500).send("AI output error.");
     return;
   }
 
-  // Build HTML table
-  const headers = options.map((_, i) => `Option ${i + 1}`);
-  let html = `<table><thead><tr><th>Attribute</th>${headers
-    .map(h => `<th>${escapeHtml(h)}</th>`)
-    .join("")}</tr></thead><tbody>`;
+  function bullets(arr) {
+    if (!Array.isArray(arr) || !arr.length) return "—";
+    return `<ul>${arr.map(b => `<li>${escapeHtml(b)}</li>`).join("")}</ul>`;
+  }
 
-  for (const rowName of schemaRows) {
-    const rowObj = (table.rows || []).find(r => r.attribute === rowName);
-    const values = Array.isArray(rowObj?.values) ? rowObj.values : [];
-    html += `<tr><td><strong>${escapeHtml(rowName)}</strong></td>`;
+  let html = `
+  <style>
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{border:1px solid rgba(255,255,255,0.25);padding:12px;vertical-align:top}
+    th{background:rgba(255,255,255,0.1);font-weight:800}
+    td:first-child{font-weight:800;width:180px;background:rgba(255,255,255,0.05)}
+    ul{margin:0;padding-left:18px}
+    li{margin-bottom:6px}
+    .recap{margin-top:16px;padding:14px;border:1px solid rgba(255,255,255,0.25);border-radius:12px}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.25);font-size:12px}
+  </style>
+  <table>
+    <thead>
+      <tr>
+        <th>Attribute</th>
+        ${options.map((_, i) => `<th>Option ${i + 1}</th>`).join("")}
+      </tr>
+    </thead>
+    <tbody>
+  `;
+
+  for (const row of schemaRows) {
+    const r = aiJson.rows.find(x => x.attribute === row);
+    html += `<tr><td>${row}</td>`;
     for (let i = 0; i < options.length; i++) {
-      const v = values[i] ?? "—";
-      html += `<td>${escapeHtml(v)}</td>`;
+      html += `<td>${bullets(r?.values?.[i])}</td>`;
     }
     html += `</tr>`;
   }
 
-  html += `</tbody></table>`;
-  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  html += `
+    </tbody>
+  </table>
+  <div class="recap">
+    <strong>Suggestion:</strong> ${escapeHtml(aiJson.recap.suggestion)}
+    <span class="pill">${escapeHtml(aiJson.recap.confidence)}</span>
+    <br/><br/>
+    <strong>Why:</strong> ${bullets(aiJson.recap.why)}
+    <strong>Key differences:</strong> ${bullets(aiJson.recap.key_differences)}
+  </div>
+  `;
+
   res.status(200).send(html);
 }
