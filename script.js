@@ -4,27 +4,52 @@ const compareBtn = document.getElementById("compare");
 const resultDiv = document.getElementById("result");
 
 let optionCount = 0;
-addInput();
-addInput();
+addOption();
+addOption();
 
-function addInput() {
+function addOption() {
   if (optionCount >= 10) return;
   optionCount++;
 
+  const wrapper = document.createElement("div");
+  wrapper.style.marginBottom = "14px";
+
+  const name = document.createElement("input");
+  name.type = "text";
+  name.placeholder = `Option ${optionCount} name (e.g., Notion)`;
+  name.className = "optname";
+  name.style.width = "100%";
+  name.style.padding = "10px 12px";
+  name.style.marginBottom = "8px";
+  name.style.borderRadius = "12px";
+  name.style.border = "1px solid rgba(255,255,255,0.14)";
+  name.style.background = "rgba(0,0,0,0.25)";
+  name.style.color = "white";
+  name.style.outline = "none";
+
   const textarea = document.createElement("textarea");
-  textarea.placeholder = `Option ${optionCount}`;
-  inputsDiv.appendChild(textarea);
+  textarea.placeholder = `Option ${optionCount} description (paste here)`;
+
+  wrapper.appendChild(name);
+  wrapper.appendChild(textarea);
+  inputsDiv.appendChild(wrapper);
 }
 
-addBtn.addEventListener("click", addInput);
+addBtn.addEventListener("click", addOption);
 
 compareBtn.addEventListener("click", async () => {
-  const options = Array.from(inputsDiv.querySelectorAll("textarea"))
-    .map(t => t.value.trim())
-    .filter(Boolean);
+  const wrappers = Array.from(inputsDiv.children);
+
+  const options = wrappers
+    .map((w, i) => {
+      const name = w.querySelector(".optname")?.value?.trim() || `Option ${i + 1}`;
+      const text = w.querySelector("textarea")?.value?.trim() || "";
+      return { name, text };
+    })
+    .filter(o => o.text);
 
   if (options.length < 2) {
-    resultDiv.innerHTML = "Please add at least two options to compare.";
+    resultDiv.innerHTML = "Please add at least two option descriptions to compare.";
     return;
   }
 
