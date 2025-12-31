@@ -108,13 +108,11 @@ function downloadFile(filename, contents, mime) {
   URL.revokeObjectURL(url);
 }
 
-function extractBottomLineAndRecapText() {
-  // We render "Bottom line" and "Recap & Suggestion" in .recap boxes.
-  const recaps = Array.from(resultDiv.querySelectorAll(".recap"));
-  if (!recaps.length) return "";
-  // Build a clean readable text block
-  const blocks = recaps.map(box => normalizeText(box.innerText));
-  return blocks.filter(Boolean).join("\n\n");
+function extractRecapText() {
+  // Grabs Bottom line + Recap & Suggestion boxes as plain text
+  const boxes = Array.from(resultDiv.querySelectorAll(".recap"));
+  if (!boxes.length) return "";
+  return boxes.map(b => normalizeText(b.innerText)).filter(Boolean).join("\n\n");
 }
 
 copyBtn?.addEventListener("click", async () => {
@@ -125,10 +123,9 @@ copyBtn?.addEventListener("click", async () => {
   }
 
   try {
-    // Excel/Sheets-ready: prepend recap, then TSV table
-    const recapText = extractBottomLineAndRecapText();
+    const recap = extractRecapText();
     const tsv = tableToTSV(table);
-    const payload = recapText ? `${recapText}\n\n${tsv}` : tsv;
+    const payload = recap ? `${recap}\n\n${tsv}` : tsv;
 
     await copyTextToClipboard(payload);
 
@@ -148,9 +145,6 @@ csvBtn?.addEventListener("click", () => {
   const csv = tableToCSV(table);
   downloadFile("sidebyside-comparison.csv", csv, "text/csv;charset=utf-8");
 });
-
-// Rename button label (only UI)
-if (copyBtn) copyBtn.textContent = "Copy (Excel-ready)";
 
 compareBtn.addEventListener("click", async () => {
   hideExports();
