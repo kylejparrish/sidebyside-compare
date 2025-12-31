@@ -53,11 +53,15 @@ function getFirstTableEl() {
   return resultDiv.querySelector("table");
 }
 
+function normalizeText(s) {
+  return (s || "").replace(/\s+/g, " ").trim();
+}
+
 function tableToTSV(table) {
   const rows = Array.from(table.querySelectorAll("tr"));
   return rows.map(row => {
     const cells = Array.from(row.querySelectorAll("th,td"));
-    const vals = cells.map(c => (c.innerText || "").replace(/\s+/g, " ").trim());
+    const vals = cells.map(c => normalizeText(c.innerText));
     return vals.join("\t");
   }).join("\n");
 }
@@ -67,8 +71,7 @@ function tableToCSV(table) {
   return rows.map(row => {
     const cells = Array.from(row.querySelectorAll("th,td"));
     const vals = cells.map(c => {
-      let v = (c.innerText || "").replace(/\s+/g, " ").trim();
-      // CSV escaping
+      let v = normalizeText(c.innerText);
       if (v.includes('"')) v = v.replace(/"/g, '""');
       if (v.includes(",") || v.includes("\n") || v.includes('"')) v = `"${v}"`;
       return v;
@@ -78,12 +81,10 @@ function tableToCSV(table) {
 }
 
 async function copyTextToClipboard(text) {
-  // Modern clipboard API
   if (navigator.clipboard && window.isSecureContext) {
     await navigator.clipboard.writeText(text);
     return;
   }
-  // Fallback
   const ta = document.createElement("textarea");
   ta.value = text;
   ta.style.position = "fixed";
@@ -107,6 +108,15 @@ function downloadFile(filename, contents, mime) {
   URL.revokeObjectURL(url);
 }
 
+function extractBottomLineAndRecapText() {
+  // We render "Bottom line" and "Recap & Suggestion" in .recap boxes.
+  const recaps = Array.from(resultDiv.querySelectorAll(".recap"));
+  if (!recaps.length) return "";
+  // Build a clean readable text block
+  const blocks = recaps.map(box => normalizeText(box.innerText));
+  return blocks.filter(Boolean).join("\n\n");
+}
+
 copyBtn?.addEventListener("click", async () => {
   const table = getFirstTableEl();
   if (!table) {
@@ -115,10 +125,15 @@ copyBtn?.addEventListener("click", async () => {
   }
 
   try {
+    // Excel/Sheets-ready: prepend recap, then TSV table
+    const recapText = extractBottomLineAndRecapText();
     const tsv = tableToTSV(table);
-    await copyTextToClipboard(tsv);
+    const payload = recapText ? `${recapText}\n\n${tsv}` : tsv;
+
+    await copyTextToClipboard(payload);
+
     copyBtn.textContent = "Copied!";
-    setTimeout(() => (copyBtn.textContent = "Copy table"), 1200);
+    setTimeout(() => (copyBtn.textContent = "Copy (Excel-ready)"), 1200);
   } catch {
     alert("Copy failed. Please try again.");
   }
@@ -133,6 +148,9 @@ csvBtn?.addEventListener("click", () => {
   const csv = tableToCSV(table);
   downloadFile("sidebyside-comparison.csv", csv, "text/csv;charset=utf-8");
 });
+
+// Rename button label (only UI)
+if (copyBtn) copyBtn.textContent = "Copy (Excel-ready)";
 
 compareBtn.addEventListener("click", async () => {
   hideExports();
@@ -164,7 +182,6 @@ compareBtn.addEventListener("click", async () => {
     const html = await response.text();
     resultDiv.innerHTML = html;
 
-    // Only show exports if a table exists
     if (getFirstTableEl()) showExports();
   } catch {
     resultDiv.innerHTML = "Something went wrong. Please try again.";
