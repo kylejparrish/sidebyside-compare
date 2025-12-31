@@ -30,9 +30,18 @@ export default async function handler(req, res) {
     return;
   }
 
-  const options = Array.isArray(body.options) ? body.options : [];
+  // NEW: options = [{ name, text }]
+  const incoming = Array.isArray(body.options) ? body.options : [];
+  const options = incoming
+    .map((o, i) => {
+      const name = (o?.name ?? "").toString().trim() || `Option ${i + 1}`;
+      const text = (o?.text ?? "").toString().trim();
+      return { name, text };
+    })
+    .filter(o => o.text);
+
   if (options.length < 2) {
-    res.status(400).send("Please provide at least two options.");
+    res.status(400).send("Please provide at least two option descriptions.");
     return;
   }
   if (options.length > 10) {
@@ -69,25 +78,28 @@ Return ONLY valid JSON in this exact format:
     {"attribute":"Not Ideal For","values":[["..."],["..."]]}
   ],
   "recap":{
-    "suggestion":"Option X or No clear winner",
+    "bottom_line":"One sentence bottom line.",
+    "suggestion":"<one of the option names> OR No clear winner",
     "confidence":"low|medium|high",
     "why":["...","..."],
-    "key_differences":["...","..."]
+    "key_differences":["...","...","..."]
   }
 }
 
 Rules:
-- Values must be bullet arrays (1–4 short bullets max per cell)
+- values must be bullet arrays (1–4 short bullets per cell)
 - values array length MUST equal number of options
-- Use "—" if information is missing
-- Do NOT invent facts
-- Suggestion must be conservative if data is insufficient
+- Use ["—"] when information is missing
+- Do NOT invent facts. Use only the text provided.
+- Suggestion must choose one of the option names exactly (or "No clear winner")
+- If the best choice depends on user preferences not provided, use "No clear winner" with confidence "low"
+- Keep bottom_line to one sentence.
 
-OPTIONS:
-${options.map((t, i) => `Option ${i + 1}: ${t}`).join("\n\n")}
+OPTIONS (name + pasted text):
+${options.map((o, i) => `Option ${i + 1} name: ${o.name}\nOption ${i + 1} text: ${o.text}`).join("\n\n")}
 `.trim();
 
-  let aiJson;
+  let ai;
   try {
     const resp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -103,7 +115,8 @@ ${options.map((t, i) => `Option ${i + 1}: ${t}`).join("\n\n")}
     });
 
     const data = await resp.json();
-    aiJson = JSON.parse(data.choices[0].message.content);
+    const content = data?.choices?.[0]?.message?.content ?? "";
+    ai = JSON.parse(content);
   } catch {
     res.status(500).send("AI output error.");
     return;
@@ -111,50 +124,72 @@ ${options.map((t, i) => `Option ${i + 1}: ${t}`).join("\n\n")}
 
   function bullets(arr) {
     if (!Array.isArray(arr) || !arr.length) return "—";
-    return `<ul>${arr.map(b => `<li>${escapeHtml(b)}</li>`).join("")}</ul>`;
+    const clean = arr.map(x => (x ?? "").toString().trim()).filter(Boolean);
+    if (!clean.length) return "—";
+    return `<ul class="cellbullets">${clean.map(b => `<li>${escapeHtml(b)}</li>`).join("")}</ul>`;
   }
 
+  const names = options.map(o => o.name);
+
+  // Build HTML
   let html = `
   <style>
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{border:1px solid rgba(255,255,255,0.25);padding:12px;vertical-align:top}
-    th{background:rgba(255,255,255,0.1);font-weight:800}
-    td:first-child{font-weight:800;width:180px;background:rgba(255,255,255,0.05)}
-    ul{margin:0;padding-left:18px}
-    li{margin-bottom:6px}
-    .recap{margin-top:16px;padding:14px;border:1px solid rgba(255,255,255,0.25);border-radius:12px}
-    .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.25);font-size:12px}
+    .tablewrap{overflow:auto;margin-top:10px}
+    table{width:100%;min-width:860px;border-collapse:separate;border-spacing:0;border:1px solid rgba(255,255,255,0.22);border-radius:12px;overflow:hidden}
+    th,td{border-right:1px solid rgba(255,255,255,0.14);border-bottom:1px solid rgba(255,255,255,0.14);padding:12px;vertical-align:top}
+    th:last-child,td:last-child{border-right:0}
+    tr:last-child td{border-bottom:0}
+    thead th{background:rgba(255,255,255,0.08);text-align:left;font-weight:900}
+    tbody td:first-child, thead th:first-child{background:rgba(255,255,255,0.05);font-weight:900;width:190px}
+    .cellbullets{margin:0;padding-left:18px}
+    .cellbullets li{margin:0 0 6px 0}
+    .recap{margin-top:14px;border:1px solid rgba(255,255,255,0.18);border-radius:12px;padding:14px;background:rgba(255,255,255,0.04)}
+    .recapTitle{font-weight:1000;margin-bottom:8px}
+    .recapRow{margin:8px 0}
+    .pill{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.18);font-size:12px;opacity:0.9}
+    .muted{opacity:0.8;font-size:12px;margin-top:10px}
   </style>
-  <table>
-    <thead>
-      <tr>
-        <th>Attribute</th>
-        ${options.map((_, i) => `<th>Option ${i + 1}</th>`).join("")}
-      </tr>
-    </thead>
-    <tbody>
-  `;
+  `.trim();
+
+  // Bottom line
+  const recap = ai?.recap ?? {};
+  const bottomLine = (recap.bottom_line ?? "").toString().trim();
+
+  if (bottomLine) {
+    html += `<div class="recap"><div class="recapTitle">Bottom line</div><div>${escapeHtml(bottomLine)}</div></div>`;
+  }
+
+  html += `<div class="tablewrap"><table><thead><tr><th>Attribute</th>${names
+    .map(n => `<th>${escapeHtml(n)}</th>`)
+    .join("")}</tr></thead><tbody>`;
 
   for (const row of schemaRows) {
-    const r = aiJson.rows.find(x => x.attribute === row);
-    html += `<tr><td>${row}</td>`;
+    const r = (ai.rows || []).find(x => x.attribute === row);
+    html += `<tr><td>${escapeHtml(row)}</td>`;
     for (let i = 0; i < options.length; i++) {
       html += `<td>${bullets(r?.values?.[i])}</td>`;
     }
     html += `</tr>`;
   }
 
+  html += `</tbody></table></div>`;
+
+  // Recap & suggestion
+  const suggestion = (recap.suggestion ?? "").toString().trim() || "No clear winner";
+  const confidence = (recap.confidence ?? "").toString().trim() || "low";
+  const why = Array.isArray(recap.why) ? recap.why : [];
+  const diffs = Array.isArray(recap.key_differences) ? recap.key_differences : [];
+
   html += `
-    </tbody>
-  </table>
-  <div class="recap">
-    <strong>Suggestion:</strong> ${escapeHtml(aiJson.recap.suggestion)}
-    <span class="pill">${escapeHtml(aiJson.recap.confidence)}</span>
-    <br/><br/>
-    <strong>Why:</strong> ${bullets(aiJson.recap.why)}
-    <strong>Key differences:</strong> ${bullets(aiJson.recap.key_differences)}
-  </div>
+    <div class="recap">
+      <div class="recapTitle">Recap & Suggestion</div>
+      <div class="recapRow"><strong>Suggestion:</strong> ${escapeHtml(suggestion)} <span class="pill">${escapeHtml(confidence)}</span></div>
+      <div class="recapRow"><strong>Why:</strong> ${bullets(why)}</div>
+      <div class="recapRow"><strong>Key differences:</strong> ${bullets(diffs)}</div>
+      <div class="muted">Note: Based only on the text you provided.</div>
+    </div>
   `;
 
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.status(200).send(html);
 }
