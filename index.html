@@ -9,11 +9,18 @@
 <body>
   <main class="wrap">
     <header class="hero">
-      <h1>Compare Anything, Side by Side</h1>
-      <p>Paste descriptions of up to 10 options. Get a clean, decision-ready comparison table.</p>
+      <h1>Stop overthinking your next purchase.</h1>
+      <p>Paste the products you’re already considering — links, descriptions, or notes — and get a clear side-by-side comparison to help you choose.</p>
+      <p class="hint" style="margin-top:10px;">
+        Best when comparing similar products (e.g., two grills, two headphones, two tools). Not for researching from scratch.
+      </p>
     </header>
 
     <section class="card">
+      <div class="hint" style="margin-bottom:10px;">
+        Tip: Include the official product link in each description if you have it — it helps you jump to the right page after you decide.
+      </div>
+
       <div id="inputs" class="inputs"></div>
 
       <div class="actions">
@@ -21,7 +28,7 @@
         <button id="compare" type="button" class="btn primary">Generate Comparison Table</button>
       </div>
 
-      <p class="hint">Tip: Paste marketing copy, feature lists, or notes. Leave blanks empty.</p>
+      <p class="hint">Leave blanks empty. The tool only uses what you paste (no rankings, no ads, no pay-to-play).</p>
     </section>
 
     <section class="card">
@@ -38,7 +45,6 @@
     </footer>
   </main>
 
-  <!-- Cache-bust so you ALWAYS load the newest script.js -->
   <script src="/script.js?v=5"></script>
 </body>
 </html>
