@@ -20,19 +20,21 @@ function addOption() {
 
   const name = document.createElement("input");
   name.type = "text";
-  name.placeholder = `Option ${optionCount} name (e.g., Notion)`;
+  name.placeholder = `Option ${optionCount} name`;
   name.className = "optname";
-  name.style.width = "100%";
-  name.style.padding = "10px 12px";
-  name.style.marginBottom = "8px";
-  name.style.borderRadius = "12px";
-  name.style.border = "1px solid rgba(255,255,255,0.14)";
-  name.style.background = "rgba(0,0,0,0.25)";
-  name.style.color = "white";
-  name.style.outline = "none";
+  Object.assign(name.style, {
+    width: "100%",
+    padding: "10px 12px",
+    marginBottom: "8px",
+    borderRadius: "12px",
+    border: "1px solid rgba(255,255,255,0.14)",
+    background: "rgba(0,0,0,0.25)",
+    color: "white",
+    outline: "none"
+  });
 
   const textarea = document.createElement("textarea");
-  textarea.placeholder = `Option ${optionCount} description (paste here)`;
+  textarea.placeholder = `Option ${optionCount} description (paste links or notes)`;
 
   wrapper.appendChild(name);
   wrapper.appendChild(textarea);
@@ -50,153 +52,106 @@ function showExports() {
 function getFirstTableEl() {
   return resultDiv.querySelector("table");
 }
-function normalizeText(s) {
-  return (s || "").replace(/\s+/g, " ").trim();
-}
-
-function tableToTSV(table) {
-  const rows = Array.from(table.querySelectorAll("tr"));
-  return rows.map(row => {
-    const cells = Array.from(row.querySelectorAll("th,td"));
-    const vals = cells.map(c => normalizeText(c.innerText));
-    return vals.join("\t");
-  }).join("\n");
-}
-
-function tableToCSV(table) {
-  const rows = Array.from(table.querySelectorAll("tr"));
-  return rows.map(row => {
-    const cells = Array.from(row.querySelectorAll("th,td"));
-    const vals = cells.map(c => {
-      let v = normalizeText(c.innerText);
-      if (v.includes('"')) v = v.replace(/"/g, '""');
-      if (v.includes(",") || v.includes("\n") || v.includes('"')) v = `"${v}"`;
-      return v;
-    });
-    return vals.join(",");
-  }).join("\n");
-}
-
-async function copyTextToClipboard(text) {
-  if (navigator.clipboard && window.isSecureContext) {
-    await navigator.clipboard.writeText(text);
-    return;
-  }
-  const ta = document.createElement("textarea");
-  ta.value = text;
-  ta.style.position = "fixed";
-  ta.style.left = "-9999px";
-  document.body.appendChild(ta);
-  ta.focus();
-  ta.select();
-  document.execCommand("copy");
-  document.body.removeChild(ta);
-}
-
-// More robust download for Chrome/Edge/Firefox + Safari/iOS fallback
-function downloadCsvRobust(filename, csvText) {
-  const blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
-
-  // IE/old Edge
-  if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-    window.navigator.msSaveOrOpenBlob(blob, filename);
-    return;
-  }
-
-  const url = URL.createObjectURL(blob);
-
-  // Normal download path
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.style.display = "none";
-  document.body.appendChild(a);
-
-  // Some browsers need a real click event
-  a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
-  a.remove();
-
-  // Safari/iOS fallback: open the blob URL if download didn’t trigger
-  // (This will open a tab showing CSV text; user can Save/Share)
-  setTimeout(() => {
-    try {
-      // If the page is still visible and user didn’t get a download prompt,
-      // opening the URL is the most reliable fallback.
-      // This is safe: it’s just the CSV file.
-      window.open(url, "_blank");
-    } catch (_) {}
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-  }, 250);
-}
-
-function extractRecapText() {
-  const boxes = Array.from(resultDiv.querySelectorAll(".recap"));
-  if (!boxes.length) return "";
-  return boxes.map(b => normalizeText(b.innerText)).filter(Boolean).join("\n\n");
-}
-
-copyBtn?.addEventListener("click", async () => {
-  const table = getFirstTableEl();
-  if (!table) {
-    alert("Generate a table first.");
-    return;
-  }
-
-  try {
-    const recap = extractRecapText();
-    const tsv = tableToTSV(table);
-    const payload = recap ? `${recap}\n\n${tsv}` : tsv;
-
-    await copyTextToClipboard(payload);
-
-    copyBtn.textContent = "Copied!";
-    setTimeout(() => (copyBtn.textContent = "Copy (Excel-ready)"), 1200);
-  } catch {
-    alert("Copy failed. Please try again.");
-  }
-});
-
-csvBtn?.addEventListener("click", () => {
-  const table = getFirstTableEl();
-  if (!table) {
-    alert("Generate a table first.");
-    return;
-  }
-  const csv = tableToCSV(table);
-  downloadCsvRobust("sidebyside-comparison.csv", csv);
-});
 
 compareBtn.addEventListener("click", async () => {
   hideExports();
 
   const wrappers = Array.from(inputsDiv.children);
   const options = wrappers
-    .map((w, i) => {
-      const name = w.querySelector(".optname")?.value?.trim() || `Option ${i + 1}`;
-      const text = w.querySelector("textarea")?.value?.trim() || "";
-      return { name, text };
-    })
+    .map((w, i) => ({
+      name: w.querySelector(".optname")?.value?.trim() || `Option ${i + 1}`,
+      text: w.querySelector("textarea")?.value?.trim() || ""
+    }))
     .filter(o => o.text);
 
   if (options.length < 2) {
-    resultDiv.innerHTML = "Please add at least two option descriptions to compare.";
+    resultDiv.innerHTML = "Please add at least two options.";
     return;
   }
 
   resultDiv.innerHTML = "Generating comparison…";
 
   try {
-    const response = await fetch("/api/compare", {
+    const r = await fetch("/api/compare", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ options })
     });
 
-    const html = await response.text();
+    const html = await r.text();
     resultDiv.innerHTML = html;
-
-    if (getFirstTableEl()) showExports();
+    if (getFirstTableEl()) {
+      showExports();
+      injectVisitAction();
+    }
   } catch {
-    resultDiv.innerHTML = "Something went wrong. Please try again.";
+    resultDiv.innerHTML = "Something went wrong.";
   }
 });
+
+function injectVisitAction() {
+  const container = resultDiv.querySelector(".comparison");
+  if (!container) return;
+
+  const data = container.dataset.options;
+  if (!data) return;
+
+  let options;
+  try {
+    options = JSON.parse(data);
+  } catch {
+    return;
+  }
+
+  if (!options.length) return;
+
+  const wrapper = document.createElement("div");
+  wrapper.style.marginTop = "18px";
+  wrapper.style.padding = "14px";
+  wrapper.style.border = "1px solid rgba(255,255,255,0.18)";
+  wrapper.style.borderRadius = "12px";
+  wrapper.style.background = "rgba(255,255,255,0.03)";
+
+  const label = document.createElement("div");
+  label.textContent = "Ready to move forward?";
+  label.style.fontWeight = "800";
+  label.style.marginBottom = "8px";
+
+  const select = document.createElement("select");
+  select.style.width = "100%";
+  select.style.padding = "10px";
+  select.style.borderRadius = "10px";
+  select.style.marginBottom = "10px";
+
+  const defaultOpt = document.createElement("option");
+  defaultOpt.textContent = "Choose an option…";
+  defaultOpt.value = "";
+  select.appendChild(defaultOpt);
+
+  options.forEach(o => {
+    const opt = document.createElement("option");
+    opt.value = o.url || "";
+    opt.textContent = o.name;
+    select.appendChild(opt);
+  });
+
+  const btn = document.createElement("button");
+  btn.textContent = "Visit official site";
+  btn.className = "btn primary";
+  btn.disabled = true;
+
+  select.addEventListener("change", () => {
+    btn.disabled = !select.value;
+  });
+
+  btn.addEventListener("click", () => {
+    if (select.value) {
+      window.open(select.value, "_blank", "noopener");
+    }
+  });
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(select);
+  wrapper.appendChild(btn);
+  resultDiv.appendChild(wrapper);
+}
