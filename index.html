@@ -21,7 +21,23 @@
         Tip: Include the official product link in each description if you have it — it helps you jump to the right page after you decide.
       </div>
 
-      <div id="inputs" class="inputs"></div>
+      <div class="card" style="margin-top:0; padding:14px;">
+        <div style="font-weight:900; margin-bottom:10px;">Try an example (1 click)</div>
+        <div class="actions" id="examples">
+          <button type="button" class="btn secondary" data-example="headphones">Headphones</button>
+          <button type="button" class="btn secondary" data-example="mattress">Mattress</button>
+          <button type="button" class="btn secondary" data-example="grill">Grill</button>
+          <button type="button" class="btn secondary" data-example="laptop">Laptop</button>
+          <button type="button" class="btn secondary" data-example="power-tool">Power Tools</button>
+          <button type="button" class="btn secondary" data-example="camera">Camera</button>
+          <button type="button" class="btn secondary" data-example="clear">Clear</button>
+        </div>
+        <div class="hint" style="margin-top:10px;">
+          These examples are intentionally short — they show how to paste “good enough” info and get clarity fast.
+        </div>
+      </div>
+
+      <div id="inputs" class="inputs" style="margin-top:12px;"></div>
 
       <div class="actions">
         <button id="addOption" type="button" class="btn secondary">+ Add another option</button>
@@ -45,6 +61,7 @@
     </footer>
   </main>
 
-  <script src="/script.js?v=5"></script>
+  <!-- bump version so newest JS loads -->
+  <script src="/script.js?v=6"></script>
 </body>
 </html>
