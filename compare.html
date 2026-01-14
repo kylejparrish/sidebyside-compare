@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SidebySide — Compare</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <h1 id="headline">Stop overthinking your next purchase.</h1>
+      <p id="subhead">
+        Paste the products you’re already considering and get a clean side-by-side comparison to help you choose.
+      </p>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;">
+          No rankings
+        </span>
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;">
+          No ads
+        </span>
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;">
+          Uses only what you paste
+        </span>
+      </div>
+
+      <p class="hint" style="margin-top:12px;">
+        Best when comparing similar products. Not for researching from scratch.
+      </p>
+    </header>
+
+    <section class="card">
+      <div class="actions">
+        <button id="loadExample" class="btn primary">Load example</button>
+        <a href="/" class="btn secondary">Compare your own options</a>
+      </div>
+
+      <p id="hint" class="hint" style="margin-top:12px;">
+        Tip: include the official product link in each description.
+      </p>
+    </section>
+
+    <footer class="footer">
+      <small>SidebySide — clean comparisons for busy people.</small>
+    </footer>
+  </main>
+
+  <script>
+    // Extract slug from /compare/<slug>
+    const parts = window.location.pathname.split("/").filter(Boolean);
+    const slug = (parts[1] || "").toLowerCase();
+
+    // Minimal mapping for nicer words (we can expand later)
+    const LABELS = {
+      tvs: { title: "TV", plural: "TVs" },
+      headphones: { title: "Headphone", plural: "Headphones" },
+      grills: { title: "Grill", plural: "Grills" },
+      mattresses: { title: "Mattress", plural: "Mattresses" }
+    };
+
+    const label = LABELS[slug];
+    if (label) {
+      document.getElementById("headline").textContent = `Stop overthinking your next ${label.title} purchase.`;
+      document.getElementById("subhead").textContent =
+        `Comparing ${label.plural}? Paste what you’ve found — links, specs, or notes — and get a clear side-by-side comparison to help you choose.`;
+    } else if (slug) {
+      // Generic fallback if we don't recognize slug yet
+      document.getElementById("headline").textContent = "Stop overthinking your next purchase.";
+      document.getElementById("subhead").textContent =
+        "Paste the products you’re already considering — links, descriptions, or notes — and get clarity fast.";
+    }
+
+    document.getElementById("loadExample").addEventListener("click", () => {
+      // Stores which preset to load (script.js will auto-load)
+      sessionStorage.setItem("preset", slug || "");
+      window.location.href = "/";
+    });
+  </script>
+</body>
+</html>
