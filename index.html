@@ -11,7 +11,20 @@
     <header class="hero">
       <h1>Stop overthinking your next purchase.</h1>
       <p>Paste the products you’re already considering — links, descriptions, or notes — and get a clear side-by-side comparison to help you choose.</p>
-      <p class="hint" style="margin-top:10px;">
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;opacity:0.9;">
+          No rankings
+        </span>
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;opacity:0.9;">
+          No ads
+        </span>
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;opacity:0.9;">
+          Uses only what you paste
+        </span>
+      </div>
+
+      <p class="hint" style="margin-top:12px;">
         Best when comparing similar products (e.g., two grills, two headphones, two tools). Not for researching from scratch.
       </p>
     </header>
@@ -44,7 +57,7 @@
         <button id="compare" type="button" class="btn primary">Generate Comparison Table</button>
       </div>
 
-      <p class="hint">Leave blanks empty. The tool only uses what you paste (no rankings, no ads, no pay-to-play).</p>
+      <p class="hint">Leave blanks empty. The tool only uses what you paste.</p>
     </section>
 
     <section class="card">
@@ -61,7 +74,6 @@
     </footer>
   </main>
 
-  <!-- Cache-bust: force newest script to load -->
   <script src="/script.js?v=7"></script>
 </body>
 </html>
