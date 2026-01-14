@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Compare TVs Side by Side</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <h1>Stop overthinking your next TV purchase.</h1>
+      <p>
+        Comparing TVs and stuck between models? Paste what you’ve found — links,
+        specs, or notes — and get a clear side-by-side comparison to help you choose.
+      </p>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;">
+          No rankings
+        </span>
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;">
+          No ads
+        </span>
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;">
+          Uses only what you paste
+        </span>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="actions">
+        <button id="loadTvExample" class="btn primary">
+          Load TV comparison example
+        </button>
+        <a href="/" class="btn secondary">
+          Compare your own TVs
+        </a>
+      </div>
+
+      <p class="hint" style="margin-top:12px;">
+        Best when comparing similar TVs (e.g. OLED vs OLED, LED vs LED).
+      </p>
+    </section>
+
+    <footer class="footer">
+      <small>SidebySide — clean comparisons for busy people.</small>
+    </footer>
+  </main>
+
+  <script>
+    document.getElementById("loadTvExample").addEventListener("click", () => {
+      // Store which example to load, then send user to the tool
+      sessionStorage.setItem("preset", "tv");
+      window.location.href = "/";
+    });
+  </script>
+</body>
+</html>
