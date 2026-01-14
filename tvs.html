@@ -11,8 +11,8 @@
     <header class="hero">
       <h1>Stop overthinking your next TV purchase.</h1>
       <p>
-        Comparing TVs and stuck between models? Paste what you’ve found — links,
-        specs, or notes — and get a clear side-by-side comparison to help you choose.
+        Comparing TVs and stuck between models? Load an example or paste your own
+        options to get a clear side-by-side comparison.
       </p>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
@@ -30,17 +30,13 @@
 
     <section class="card">
       <div class="actions">
-        <button id="loadTvExample" class="btn primary">
+        <button id="loadTv" class="btn primary">
           Load TV comparison example
         </button>
         <a href="/" class="btn secondary">
           Compare your own TVs
         </a>
       </div>
-
-      <p class="hint" style="margin-top:12px;">
-        Best when comparing similar TVs (e.g. OLED vs OLED, LED vs LED).
-      </p>
     </section>
 
     <footer class="footer">
@@ -49,8 +45,7 @@
   </main>
 
   <script>
-    document.getElementById("loadTvExample").addEventListener("click", () => {
-      // Store which example to load, then send user to the tool
+    document.getElementById("loadTv").addEventListener("click", () => {
       sessionStorage.setItem("preset", "tv");
       window.location.href = "/";
     });
