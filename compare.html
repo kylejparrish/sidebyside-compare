@@ -11,19 +11,13 @@
     <header class="hero">
       <h1 id="headline">Stop overthinking your next purchase.</h1>
       <p id="subhead">
-        Paste the products you’re already considering and get a clean side-by-side comparison to help you choose.
+        Paste the products you’re already considering — links, descriptions, or notes — and get a clear side-by-side comparison to help you choose.
       </p>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
-        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;">
-          No rankings
-        </span>
-        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;">
-          No ads
-        </span>
-        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;">
-          Uses only what you paste
-        </span>
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;opacity:0.9;">No rankings</span>
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;opacity:0.9;">No ads</span>
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;opacity:0.9;">Uses only what you paste</span>
       </div>
 
       <p class="hint" style="margin-top:12px;">
@@ -48,16 +42,30 @@
   </main>
 
   <script>
-    // Extract slug from /compare/<slug>
     const parts = window.location.pathname.split("/").filter(Boolean);
     const slug = (parts[1] || "").toLowerCase();
 
-    // Minimal mapping for nicer words (we can expand later)
     const LABELS = {
       tvs: { title: "TV", plural: "TVs" },
-      headphones: { title: "Headphone", plural: "Headphones" },
-      grills: { title: "Grill", plural: "Grills" },
-      mattresses: { title: "Mattress", plural: "Mattresses" }
+      headphones: { title: "headphone", plural: "headphones" },
+      mattresses: { title: "mattress", plural: "mattresses" },
+      laptops: { title: "laptop", plural: "laptops" },
+      phones: { title: "phone", plural: "phones" },
+      tablets: { title: "tablet", plural: "tablets" },
+      smartwatches: { title: "smartwatch", plural: "smartwatches" },
+      speakers: { title: "speaker", plural: "speakers" },
+      soundbars: { title: "soundbar", plural: "soundbars" },
+      cameras: { title: "camera", plural: "cameras" },
+      printers: { title: "printer", plural: "printers" },
+      routers: { title: "Wi-Fi router", plural: "Wi-Fi routers" },
+      vacuums: { title: "vacuum", plural: "vacuums" },
+      airpurifiers: { title: "air purifier", plural: "air purifiers" },
+      coffee: { title: "coffee maker", plural: "coffee makers" },
+      grills: { title: "grill", plural: "grills" },
+      powertools: { title: "power tool", plural: "power tools" },
+      bikes: { title: "bike", plural: "bikes" },
+      mattresses2: { title: "mattress", plural: "mattresses" }, /* harmless alias */
+      standingdesks: { title: "standing desk", plural: "standing desks" }
     };
 
     const label = LABELS[slug];
@@ -66,14 +74,12 @@
       document.getElementById("subhead").textContent =
         `Comparing ${label.plural}? Paste what you’ve found — links, specs, or notes — and get a clear side-by-side comparison to help you choose.`;
     } else if (slug) {
-      // Generic fallback if we don't recognize slug yet
       document.getElementById("headline").textContent = "Stop overthinking your next purchase.";
       document.getElementById("subhead").textContent =
         "Paste the products you’re already considering — links, descriptions, or notes — and get clarity fast.";
     }
 
     document.getElementById("loadExample").addEventListener("click", () => {
-      // Stores which preset to load (script.js will auto-load)
       sessionStorage.setItem("preset", slug || "");
       window.location.href = "/";
     });
