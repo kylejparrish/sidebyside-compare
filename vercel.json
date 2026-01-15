@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/compare", "destination": "/compare-index.html" },
     { "source": "/compare/:slug*", "destination": "/compare.html" },
     { "source": "/tvs", "destination": "/tvs.html" }
   ]
