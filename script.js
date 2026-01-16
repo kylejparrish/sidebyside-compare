@@ -1,164 +1,129 @@
-// ---------- DOM ----------
+const inputsDiv = document.getElementById("inputs");
+const addBtn = document.getElementById("addOption");
 const compareBtn = document.getElementById("compare");
 const resultDiv = document.getElementById("result");
 
 const exportActions = document.getElementById("exportActions");
 const copyBtn = document.getElementById("copyTable");
+const csvBtn = document.getElementById("downloadCsv");
 
-// Inputs (fixed 3 slots)
-const name1 = document.getElementById("option-name-1");
-const desc1 = document.getElementById("option-desc-1");
-const name2 = document.getElementById("option-name-2");
-const desc2 = document.getElementById("option-desc-2");
-const name3 = document.getElementById("option-name-3");
-const desc3 = document.getElementById("option-desc-3");
+const examplesBar = document.getElementById("examples");
 
-// ---------- Presets ----------
-const PRESETS = {
-  headphones: [
-    {
-      name: "Over-ear ANC",
-      desc: "Over-ear noise cancelling headphones. Best isolation and comfort, but bulkier. Great for travel and office. https://example.com/overear"
-    },
-    {
-      name: "On-ear",
-      desc: "On-ear headphones. Lightweight and portable. Less isolation than over-ear. Good for short sessions. https://example.com/onear"
-    },
-    {
-      name: "Earbuds",
-      desc: "In-ear earbuds. Most portable. Great for workouts and calls. Comfort varies. https://example.com/earbuds"
-    }
-  ],
-  mattress: [
-    {
-      name: "Memory foam",
-      desc: "Contouring feel, strong pressure relief, great motion isolation. Can sleep warm. https://example.com/foam"
-    },
-    {
-      name: "Hybrid",
-      desc: "Foam + coils. Balanced support, often cooler, better edge support. Higher price. https://example.com/hybrid"
-    },
-    {
-      name: "Latex",
-      desc: "Durable and responsive, often cooler than memory foam. Higher cost. https://example.com/latex"
-    }
-  ],
-  grill: [
-    {
-      name: "Gas grill",
-      desc: "Fast heat-up, easy temperature control, great for weeknights. Less smoky flavor. https://example.com/gas"
-    },
-    {
-      name: "Charcoal grill",
-      desc: "Best smoky flavor. More effort, longer setup, more cleanup. https://example.com/charcoal"
-    },
-    {
-      name: "Pellet grill",
-      desc: "Set-and-forget temperature. Great BBQ. Higher cost and more parts. https://example.com/pellet"
-    }
-  ],
-  laptop: [
-    {
-      name: "Ultrabook",
-      desc: "Thin/light, long battery, best for productivity and travel. Less gaming power. https://example.com/ultrabook"
-    },
-    {
-      name: "Performance",
-      desc: "Faster CPU/GPU for heavier work. Heavier/louder. Shorter battery. https://example.com/performance"
-    },
-    {
-      name: "Budget",
-      desc: "Best value. Fine for browsing/docs. Lower build/screen quality. https://example.com/budget"
-    }
-  ],
-  powertools: [
-    {
-      name: "Corded",
-      desc: "Consistent power, cheaper, no batteries. Needs outlet. https://example.com/corded"
-    },
-    {
-      name: "Cordless",
-      desc: "Portable and convenient. Battery ecosystem cost. https://example.com/cordless"
-    },
-    {
-      name: "Pro cordless",
-      desc: "Best durability and performance. Highest cost. https://example.com/pro"
-    }
-  ],
-  camera: [
-    {
-      name: "Mirrorless",
-      desc: "Modern autofocus, great photo/video. Smaller body. https://example.com/mirrorless"
-    },
-    {
-      name: "DSLR",
-      desc: "Great battery and optical viewfinder. Bulkier system. https://example.com/dslr"
-    },
-    {
-      name: "Compact",
-      desc: "Easy carry/travel. Smaller sensor, simpler controls. https://example.com/compact"
-    }
-  ]
-};
+let optionCount = 0;
 
-// ---------- Helpers ----------
+// ===== helpers =====
 function normalizeText(s) {
   return (s || "").replace(/\s+/g, " ").trim();
 }
-
 function hideExports() {
   if (exportActions) exportActions.style.display = "none";
 }
-
 function showExports() {
   if (exportActions) exportActions.style.display = "flex";
 }
-
-function clearAll() {
-  name1.value = ""; desc1.value = "";
-  name2.value = ""; desc2.value = "";
-  name3.value = ""; desc3.value = "";
+function getFirstTableEl() {
+  return resultDiv.querySelector("table");
 }
+function clearInputs() {
+  inputsDiv.innerHTML = "";
+  optionCount = 0;
+}
+function addOption(nameValue = "", textValue = "") {
+  if (optionCount >= 10) return;
+  optionCount++;
+
+  const wrapper = document.createElement("div");
+  wrapper.style.marginBottom = "14px";
+
+  const name = document.createElement("input");
+  name.type = "text";
+  name.placeholder = `Option ${optionCount} name`;
+  name.className = "optname";
+  Object.assign(name.style, {
+    width: "100%",
+    padding: "10px 12px",
+    marginBottom: "8px",
+    borderRadius: "12px",
+    border: "1px solid rgba(255,255,255,0.14)",
+    background: "rgba(0,0,0,0.25)",
+    color: "white",
+    outline: "none"
+  });
+  name.value = nameValue;
+
+  const textarea = document.createElement("textarea");
+  textarea.placeholder = `Option ${optionCount} description (paste links or notes)`;
+  textarea.value = textValue;
+
+  wrapper.appendChild(name);
+  wrapper.appendChild(textarea);
+  inputsDiv.appendChild(wrapper);
+}
+function ensureTwoInputs() {
+  if (optionCount === 0) { addOption(); addOption(); }
+}
+
+// ===== 20 category presets (must match button data-example keys) =====
+const PRESETS = {
+  headphones: [
+    { name: "Over-ear ANC", text: "Best isolation + comfort. Great travel/office. Bulkier. https://example.com/overear" },
+    { name: "On-ear", text: "Lightweight, portable. Less isolation. https://example.com/onear" },
+    { name: "Earbuds", text: "Most portable. Great workouts/calls. https://example.com/earbuds" }
+  ],
+  mattresses: [
+    { name: "Memory foam", text: "Great pressure relief. Can sleep warm. https://example.com/foam" },
+    { name: "Hybrid", text: "Balanced support + cooler sleep. https://example.com/hybrid" },
+    { name: "Latex", text: "Durable, responsive, often cooler. https://example.com/latex" }
+  ],
+  grills: [
+    { name: "Gas", text: "Fast heat-up. Easy weeknights. https://example.com/gas" },
+    { name: "Charcoal", text: "Best smoky flavor. More work. https://example.com/charcoal" },
+    { name: "Pellet", text: "Set-and-forget temp. Great BBQ. https://example.com/pellet" }
+  ],
+  laptops: [
+    { name: "Ultrabook", text: "Thin/light. Great battery. https://example.com/ultrabook" },
+    { name: "Performance", text: "Faster CPU/GPU. Heavier + louder. https://example.com/performance" },
+    { name: "Budget", text: "Best value. https://example.com/budget" }
+  ],
+  powertools: [
+    { name: "Corded", text: "Consistent power. Needs outlet. https://example.com/corded" },
+    { name: "Cordless", text: "Portable. Battery ecosystem cost. https://example.com/cordless" },
+    { name: "Pro cordless", text: "Best durability. Highest cost. https://example.com/pro" }
+  ],
+  cameras: [
+    { name: "Mirrorless", text: "Great autofocus/video. Smaller body. https://example.com/mirrorless" },
+    { name: "DSLR", text: "Great battery. Bulkier. https://example.com/dslr" },
+    { name: "Compact", text: "Easy carry/travel. https://example.com/compact" }
+  ]
+};
 
 function loadPreset(key) {
   if (key === "clear") {
-    clearAll();
+    clearInputs();
+    addOption(); addOption();
     resultDiv.innerHTML = "Your table will appear here.";
     hideExports();
     return;
   }
 
-  const p = PRESETS[key];
-  if (!p) return;
+  const preset = PRESETS[key];
+  if (!preset) return;
 
-  name1.value = p[0]?.name || "";
-  desc1.value = p[0]?.desc || "";
-
-  name2.value = p[1]?.name || "";
-  desc2.value = p[1]?.desc || "";
-
-  name3.value = p[2]?.name || "";
-  desc3.value = p[2]?.desc || "";
+  clearInputs();
+  preset.forEach(p => addOption(p.name, p.text));
+  resultDiv.innerHTML = "Loaded example. Click “Generate Comparison Table”.";
+  hideExports();
+  window.scrollTo({ top: inputsDiv.getBoundingClientRect().top + window.scrollY - 20, behavior: "smooth" });
 }
 
-function getOptions() {
-  const options = [];
+// ===== example bar wiring =====
+examplesBar?.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-example]");
+  if (!btn) return;
+  loadPreset(btn.getAttribute("data-example"));
+});
 
-  const o1 = normalizeText(desc1.value);
-  const o2 = normalizeText(desc2.value);
-  const o3 = normalizeText(desc3.value);
-
-  if (o1) options.push({ name: normalizeText(name1.value) || "Option 1", text: o1 });
-  if (o2) options.push({ name: normalizeText(name2.value) || "Option 2", text: o2 });
-  if (o3) options.push({ name: normalizeText(name3.value) || "Option 3", text: o3 });
-
-  return options;
-}
-
-function getFirstTableEl() {
-  return resultDiv.querySelector("table");
-}
-
+// ===== export =====
 function tableToTSV(table) {
   const rows = Array.from(table.querySelectorAll("tr"));
   return rows.map(row => {
@@ -183,55 +148,51 @@ async function copyTextToClipboard(text) {
   document.body.removeChild(ta);
 }
 
-// ---------- Example button wiring ----------
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest(".example-btn");
-  if (!btn) return;
-  const key = btn.getAttribute("data-example");
-  loadPreset(key);
+copyBtn?.addEventListener("click", async () => {
+  const table = getFirstTableEl();
+  if (!table) return alert("Generate a table first.");
+  await copyTextToClipboard(tableToTSV(table));
+  copyBtn.textContent = "Copied!";
+  setTimeout(() => (copyBtn.textContent = "Copy (Excel-ready)"), 1200);
 });
 
-// ---------- Generate comparison ----------
-compareBtn.addEventListener("click", async () => {
+// ===== main compare =====
+addBtn?.addEventListener("click", () => addOption());
+
+compareBtn?.addEventListener("click", async () => {
   hideExports();
 
-  // Analytics event (safe)
   if (window.va) window.va("event", "comparison_generated");
 
-  const options = getOptions();
+  const wrappers = Array.from(inputsDiv.children);
+  const options = wrappers
+    .map((w, i) => ({
+      name: w.querySelector(".optname")?.value?.trim() || `Option ${i + 1}`,
+      text: w.querySelector("textarea")?.value?.trim() || ""
+    }))
+    .filter(o => o.text);
+
   if (options.length < 2) {
-    resultDiv.innerHTML = "Please fill at least two descriptions to compare.";
+    resultDiv.innerHTML = "Please add at least two options.";
     return;
   }
 
   resultDiv.innerHTML = "Generating comparison…";
 
   try {
-    const r = await fetch("/api/compare", {
+    const response = await fetch("/api/compare", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ options })
     });
 
-    const html = await r.text();
+    const html = await response.text();
     resultDiv.innerHTML = html;
-
     if (getFirstTableEl()) showExports();
   } catch {
     resultDiv.innerHTML = "Something went wrong.";
   }
 });
 
-// ---------- Copy export ----------
-copyBtn?.addEventListener("click", async () => {
-  const table = getFirstTableEl();
-  if (!table) return alert("Generate a table first.");
-  try {
-    const tsv = tableToTSV(table);
-    await copyTextToClipboard(tsv);
-    copyBtn.textContent = "Copied!";
-    setTimeout(() => (copyBtn.textContent = "Copy (Excel-ready)"), 1200);
-  } catch {
-    alert("Copy failed. Please try again.");
-  }
-});
+// init
+ensureTwoInputs();
