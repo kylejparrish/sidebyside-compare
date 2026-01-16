@@ -5,7 +5,7 @@ const resultDiv = document.getElementById("result");
 
 const exportActions = document.getElementById("exportActions");
 const copyBtn = document.getElementById("copyTable");
-const excelBtn = document.getElementById("downloadCsv"); // KEEP ID, label says "Download Excel"
+const excelBtn = document.getElementById("downloadCsv"); // button label says "Download Excel"
 
 const examplesBar = document.getElementById("examples");
 
@@ -136,6 +136,19 @@ function tableToTSV(table) {
   }).join("\n");
 }
 
+function tsvToCsv(tsv) {
+  // Convert TSV -> CSV safely
+  return tsv
+    .split("\n")
+    .map(line => line.split("\t").map(cell => {
+      let v = cell || "";
+      if (v.includes('"')) v = v.replace(/"/g, '""');
+      if (v.includes(",") || v.includes("\n") || v.includes('"')) v = `"${v}"`;
+      return v;
+    }).join(","))
+    .join("\n");
+}
+
 async function copyTextToClipboard(text) {
   if (navigator.clipboard && window.isSecureContext) {
     await navigator.clipboard.writeText(text);
@@ -152,19 +165,31 @@ async function copyTextToClipboard(text) {
   document.body.removeChild(ta);
 }
 
-function downloadAsExcelTSV(tsvText, filenameBase = "sidebyside-comparison") {
-  // Excel opens TSV cleanly; we name it .xls for user expectation.
-  const blob = new Blob(["\uFEFF" + tsvText], { type: "application/vnd.ms-excel;charset=utf-8" });
+// Robust download: download if possible; otherwise open a new tab with the file
+function downloadTextRobust(filename, text, mimeType) {
+  const blob = new Blob(["\uFEFF" + text], { type: mimeType }); // BOM helps Excel
+  // IE/old Edge support
+  if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+    window.navigator.msSaveOrOpenBlob(blob, filename);
+    return;
+  }
+
   const url = URL.createObjectURL(blob);
 
+  // Standard download attempt
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${filenameBase}.xls`;
+  a.download = filename;
+  a.style.display = "none";
   document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  a.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+  a.remove();
 
-  URL.revokeObjectURL(url);
+  // Fallback: open in new tab (Safari / blocked download cases)
+  setTimeout(() => {
+    try { window.open(url, "_blank"); } catch (_) {}
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }, 250);
 }
 
 // ===== Copy button =====
@@ -176,12 +201,13 @@ copyBtn?.addEventListener("click", async () => {
   setTimeout(() => (copyBtn.textContent = "Copy (Excel-ready)"), 1200);
 });
 
-// ===== Download Excel button =====
+// ===== Download Excel button (downloads CSV, Excel opens it reliably) =====
 excelBtn?.addEventListener("click", () => {
   const table = getFirstTableEl();
   if (!table) return alert("Generate a table first.");
   const tsv = tableToTSV(table);
-  downloadAsExcelTSV(tsv, "sidebyside-comparison");
+  const csv = tsvToCsv(tsv);
+  downloadTextRobust("sidebyside-comparison.csv", csv, "text/csv;charset=utf-8");
 });
 
 // ===== main compare =====
