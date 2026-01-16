@@ -13,19 +13,13 @@
       <p>Paste the products you’re already considering — links, descriptions, or notes — and get a clear side-by-side comparison to help you choose.</p>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
-        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;opacity:0.9;">
-          No rankings
-        </span>
-        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;opacity:0.9;">
-          No ads
-        </span>
-        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;opacity:0.9;">
-          Uses only what you paste
-        </span>
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;opacity:0.9;">No rankings</span>
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;opacity:0.9;">No ads</span>
+        <span style="border:1px solid rgba(255,255,255,0.18);padding:6px 10px;border-radius:999px;font-size:13px;opacity:0.9;">Uses only what you paste</span>
       </div>
 
       <p class="hint" style="margin-top:12px;">
-        Best when comparing similar products (e.g., two grills, two headphones, two tools). Not for researching from scratch.
+        Best when comparing similar products. Not for researching from scratch.
       </p>
     </header>
 
@@ -36,24 +30,36 @@
 
       <div class="card" style="margin-top:0; padding:14px;">
         <div style="font-weight:900; margin-bottom:10px;">Try an example (1 click)</div>
-        <div class="actions" id="examples">
-          <button type="button" class="btn secondary" data-example="headphones">Headphones</button>
-          <button type="button" class="btn secondary" data-example="mattress">Mattress</button>
-          <button type="button" class="btn secondary" data-example="grill">Grill</button>
-          <button type="button" class="btn secondary" data-example="laptop">Laptop</button>
-          <button type="button" class="btn secondary" data-example="power-tool">Power Tools</button>
-          <button type="button" class="btn secondary" data-example="camera">Camera</button>
-          <button type="button" class="btn secondary" data-example="clear">Clear</button>
+
+        <!-- Working example buttons (wired via script.js) -->
+        <div class="actions">
+          <button type="button" class="btn secondary example-btn" data-example="headphones">Headphones</button>
+          <button type="button" class="btn secondary example-btn" data-example="mattress">Mattress</button>
+          <button type="button" class="btn secondary example-btn" data-example="grill">Grill</button>
+          <button type="button" class="btn secondary example-btn" data-example="laptop">Laptop</button>
+          <button type="button" class="btn secondary example-btn" data-example="powertools">Power Tools</button>
+          <button type="button" class="btn secondary example-btn" data-example="camera">Camera</button>
+          <button type="button" class="btn secondary example-btn" data-example="clear">Clear</button>
         </div>
+
         <div class="hint" style="margin-top:10px;">
-          These examples are intentionally short — they show how to paste “good enough” info and get clarity fast.
+          These examples show how to paste “good enough” info and get clarity fast.
         </div>
       </div>
 
-      <div id="inputs" class="inputs" style="margin-top:12px;"></div>
+      <!-- Options -->
+      <div class="inputs" style="margin-top:12px;">
+        <input id="option-name-1" class="optname option-name" type="text" placeholder="Option 1 name" />
+        <textarea id="option-desc-1" class="option-desc" placeholder="Option 1 description (paste links or notes)"></textarea>
+
+        <input id="option-name-2" class="optname option-name" type="text" placeholder="Option 2 name" />
+        <textarea id="option-desc-2" class="option-desc" placeholder="Option 2 description (paste links or notes)"></textarea>
+
+        <input id="option-name-3" class="optname option-name" type="text" placeholder="Option 3 name (optional)" />
+        <textarea id="option-desc-3" class="option-desc" placeholder="Option 3 description (optional)"></textarea>
+      </div>
 
       <div class="actions">
-        <button id="addOption" type="button" class="btn secondary">+ Add another option</button>
         <button id="compare" type="button" class="btn primary">Generate Comparison Table</button>
       </div>
 
@@ -65,7 +71,6 @@
 
       <div id="exportActions" class="actions" style="display:none; margin-top:12px;">
         <button id="copyTable" type="button" class="btn secondary">Copy (Excel-ready)</button>
-        <button id="downloadCsv" type="button" class="btn secondary">Download CSV</button>
       </div>
     </section>
 
@@ -74,6 +79,7 @@
     </footer>
   </main>
 
-  <script src="/script.js?v=7"></script>
+  <!-- bump version so newest JS loads -->
+  <script src="/script.js?v=8"></script>
 </body>
 </html>
