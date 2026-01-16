@@ -214,6 +214,8 @@ copyBtn?.addEventListener("click", async () => {
 addBtn?.addEventListener("click", () => addOption());
 
 compareBtn?.addEventListener("click", async () => {
+  if (window.va) window.va('event', 'comparison_generated');
+
   hideExports();
 
   const options = Array.from(inputsDiv.children)
