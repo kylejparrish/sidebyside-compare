@@ -5,7 +5,7 @@ const resultDiv = document.getElementById("result");
 
 const exportActions = document.getElementById("exportActions");
 const copyBtn = document.getElementById("copyTable");
-const csvBtn = document.getElementById("downloadCsv");
+const excelBtn = document.getElementById("downloadCsv"); // KEEP ID, label says "Download Excel"
 
 const examplesBar = document.getElementById("examples");
 
@@ -60,10 +60,13 @@ function addOption(nameValue = "", textValue = "") {
   inputsDiv.appendChild(wrapper);
 }
 function ensureTwoInputs() {
-  if (optionCount === 0) { addOption(); addOption(); }
+  if (optionCount === 0) {
+    addOption();
+    addOption();
+  }
 }
 
-// ===== 20 category presets (must match button data-example keys) =====
+// ===== presets =====
 const PRESETS = {
   headphones: [
     { name: "Over-ear ANC", text: "Best isolation + comfort. Great travel/office. Bulkier. https://example.com/overear" },
@@ -100,7 +103,8 @@ const PRESETS = {
 function loadPreset(key) {
   if (key === "clear") {
     clearInputs();
-    addOption(); addOption();
+    addOption();
+    addOption();
     resultDiv.innerHTML = "Your table will appear here.";
     hideExports();
     return;
@@ -123,7 +127,7 @@ examplesBar?.addEventListener("click", (e) => {
   loadPreset(btn.getAttribute("data-example"));
 });
 
-// ===== export =====
+// ===== export helpers =====
 function tableToTSV(table) {
   const rows = Array.from(table.querySelectorAll("tr"));
   return rows.map(row => {
@@ -148,12 +152,36 @@ async function copyTextToClipboard(text) {
   document.body.removeChild(ta);
 }
 
+function downloadAsExcelTSV(tsvText, filenameBase = "sidebyside-comparison") {
+  // Excel opens TSV cleanly; we name it .xls for user expectation.
+  const blob = new Blob(["\uFEFF" + tsvText], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${filenameBase}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+}
+
+// ===== Copy button =====
 copyBtn?.addEventListener("click", async () => {
   const table = getFirstTableEl();
   if (!table) return alert("Generate a table first.");
   await copyTextToClipboard(tableToTSV(table));
   copyBtn.textContent = "Copied!";
   setTimeout(() => (copyBtn.textContent = "Copy (Excel-ready)"), 1200);
+});
+
+// ===== Download Excel button =====
+excelBtn?.addEventListener("click", () => {
+  const table = getFirstTableEl();
+  if (!table) return alert("Generate a table first.");
+  const tsv = tableToTSV(table);
+  downloadAsExcelTSV(tsv, "sidebyside-comparison");
 });
 
 // ===== main compare =====
@@ -188,6 +216,7 @@ compareBtn?.addEventListener("click", async () => {
 
     const html = await response.text();
     resultDiv.innerHTML = html;
+
     if (getFirstTableEl()) showExports();
   } catch {
     resultDiv.innerHTML = "Something went wrong.";
