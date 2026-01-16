@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SidebySide — Compare</title>
+
+  <title>Compare Products Side by Side | SidebySide</title>
+  <meta name="description" content="Compare products side by side using only the options you’re considering. No rankings, no ads, no bias — just clear decision summaries." />
+  <link rel="canonical" href="https://compare.sidebyside.to/compare" />
+
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
@@ -31,7 +35,7 @@
         <a href="/" class="btn secondary">Compare your own options</a>
       </div>
 
-      <p id="hint" class="hint" style="margin-top:12px;">
+      <p class="hint" style="margin-top:12px;">
         Tip: include the official product link in each description.
       </p>
     </section>
@@ -42,41 +46,49 @@
   </main>
 
   <script>
+    // URL pattern: /compare/<slug>
     const parts = window.location.pathname.split("/").filter(Boolean);
     const slug = (parts[1] || "").toLowerCase();
 
     const LABELS = {
-      tvs: { title: "TV", plural: "TVs" },
-      headphones: { title: "headphone", plural: "headphones" },
-      mattresses: { title: "mattress", plural: "mattresses" },
-      laptops: { title: "laptop", plural: "laptops" },
-      phones: { title: "phone", plural: "phones" },
-      tablets: { title: "tablet", plural: "tablets" },
-      smartwatches: { title: "smartwatch", plural: "smartwatches" },
-      speakers: { title: "speaker", plural: "speakers" },
-      soundbars: { title: "soundbar", plural: "soundbars" },
-      cameras: { title: "camera", plural: "cameras" },
-      printers: { title: "printer", plural: "printers" },
-      routers: { title: "Wi-Fi router", plural: "Wi-Fi routers" },
-      vacuums: { title: "vacuum", plural: "vacuums" },
-      airpurifiers: { title: "air purifier", plural: "air purifiers" },
-      coffee: { title: "coffee maker", plural: "coffee makers" },
-      grills: { title: "grill", plural: "grills" },
-      powertools: { title: "power tool", plural: "power tools" },
-      bikes: { title: "bike", plural: "bikes" },
-      mattresses2: { title: "mattress", plural: "mattresses" }, /* harmless alias */
-      standingdesks: { title: "standing desk", plural: "standing desks" }
+      tvs: { title: "TV", plural: "TVs", desc: "Compare TVs side by side to quickly understand picture quality, features, size, and best use cases — using only what you paste." },
+      headphones: { title: "headphone", plural: "headphones", desc: "Compare headphones side by side to quickly understand comfort, sound, isolation, and best use cases — using only what you paste." },
+      mattresses: { title: "mattress", plural: "mattresses", desc: "Compare mattresses side by side to quickly understand comfort, support, materials, and best use cases — using only what you paste." },
+      laptops: { title: "laptop", plural: "laptops", desc: "Compare laptops side by side to quickly understand performance, battery, portability, and best use cases — using only what you paste." },
+      phones: { title: "phone", plural: "phones", desc: "Compare phones side by side to quickly understand camera, performance, battery, and best use cases — using only what you paste." },
+      tablets: { title: "tablet", plural: "tablets", desc: "Compare tablets side by side to quickly understand screen, performance, accessories, and best use cases — using only what you paste." },
+      smartwatches: { title: "smartwatch", plural: "smartwatches", desc: "Compare smartwatches side by side to quickly understand tracking, battery, features, and best use cases — using only what you paste." },
+      speakers: { title: "speaker", plural: "speakers", desc: "Compare speakers side by side to quickly understand sound, size, features, and best use cases — using only what you paste." },
+      soundbars: { title: "soundbar", plural: "soundbars", desc: "Compare soundbars side by side to quickly understand audio quality, setup, features, and best use cases — using only what you paste." },
+      cameras: { title: "camera", plural: "cameras", desc: "Compare cameras side by side to quickly understand photo/video, portability, features, and best use cases — using only what you paste." },
+      printers: { title: "printer", plural: "printers", desc: "Compare printers side by side to quickly understand cost, speed, quality, and best use cases — using only what you paste." },
+      routers: { title: "Wi-Fi router", plural: "Wi-Fi routers", desc: "Compare Wi-Fi routers side by side to quickly understand coverage, speed, features, and best use cases — using only what you paste." },
+      vacuums: { title: "vacuum", plural: "vacuums", desc: "Compare vacuums side by side to quickly understand cleaning, convenience, features, and best use cases — using only what you paste." },
+      airpurifiers: { title: "air purifier", plural: "air purifiers", desc: "Compare air purifiers side by side to quickly understand coverage, filters, features, and best use cases — using only what you paste." },
+      coffee: { title: "coffee maker", plural: "coffee makers", desc: "Compare coffee makers side by side to quickly understand ease, features, cost, and best use cases — using only what you paste." },
+      grills: { title: "grill", plural: "grills", desc: "Compare grills side by side to quickly understand cooking style, effort, features, and best use cases — using only what you paste." },
+      powertools: { title: "power tool", plural: "power tools", desc: "Compare power tools side by side to quickly understand power, portability, ecosystem cost, and best use cases — using only what you paste." },
+      bikes: { title: "bike", plural: "bikes", desc: "Compare bikes side by side to quickly understand comfort, terrain fit, features, and best use cases — using only what you paste." },
+      standingdesks: { title: "standing desk", plural: "standing desks", desc: "Compare standing desks side by side to quickly understand stability, features, cost, and best use cases — using only what you paste." }
     };
 
     const label = LABELS[slug];
+
+    // Dynamic visible copy
     if (label) {
-      document.getElementById("headline").textContent = `Stop overthinking your next ${label.title} purchase.`;
+      document.getElementById("headline").textContent = `Compare ${label.plural} Side by Side`;
       document.getElementById("subhead").textContent =
-        `Comparing ${label.plural}? Paste what you’ve found — links, specs, or notes — and get a clear side-by-side comparison to help you choose.`;
-    } else if (slug) {
-      document.getElementById("headline").textContent = "Stop overthinking your next purchase.";
-      document.getElementById("subhead").textContent =
-        "Paste the products you’re already considering — links, descriptions, or notes — and get clarity fast.";
+        `Stop overthinking your next ${label.title} purchase. Paste what you’ve found — links, specs, or notes — and get a clear side-by-side comparison to help you choose.`;
+    }
+
+    // Dynamic SEO (title + description + canonical)
+    if (label) {
+      document.title = `Compare ${label.plural} Side by Side | SidebySide`;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute("content", label.desc);
+
+      const canon = document.querySelector('link[rel="canonical"]');
+      if (canon) canon.setAttribute("href", `https://compare.sidebyside.to/compare/${slug}`);
     }
 
     document.getElementById("loadExample").addEventListener("click", () => {
